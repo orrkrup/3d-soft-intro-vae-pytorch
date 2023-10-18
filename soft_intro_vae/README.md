@@ -1,98 +1,102 @@
-# soft-intro-vae-pytorch-images
+# 3d-soft-intro-vae-pytorch
 
-Implementation of Soft-IntroVAE for image data.
+Implementation of 3D Soft-IntroVAE for point clouds.
 
-A step-by-step tutorial can be found in [Soft-IntroVAE Jupyter Notebook Tutorials](https://github.com/taldatech/soft-intro-vae-pytorch/tree/main/soft_intro_vae_tutorial).
-
+This codes builds upon the code base of [3D-AAE](https://github.com/MaciejZamorski/3d-AAE) 
+from the paper "Adversarial Autoencoders for Compact Representations of 3D Point Clouds"
+by Maciej Zamorski, Maciej Zięba, Piotr Klukowski, Rafał Nowak, Karol Kurach, Wojciech Stokowiec, and Tomasz Trzciński
 <p align="center">
-  <img src="https://raw.githubusercontent.com/taldatech/soft-intro-vae-web/main/assets/cifar10_samples.png" width="200">
+  <img src="https://github.com/taldatech/soft-intro-vae-web/raw/main/assets/3d_airplane.jpg" width="250">
+  <img src="https://github.com/taldatech/soft-intro-vae-web/raw/main/assets/3d_chair.jpg" width="250">
 </p>
 
-- [soft-intro-vae-pytorch-images](#soft-intro-vae-pytorch-images)
+<p align="center">
+  <img src="https://github.com/taldatech/soft-intro-vae-web/raw/main/assets/3d_plane_to_car.gif" width="300">
+</p>
+
+- [3d-soft-intro-vae-pytorch](#3d-soft-intro-vae-pytorch)
+  * [Requirements](#requirements)
   * [Training](#training)
+  * [Testing](#testing)
+  * [Rendering](#rendering)
   * [Datasets](#datasets)
+  * [Pretrained models](#pretrained-models)
   * [Recommended hyperparameters](#recommended-hyperparameters)
   * [What to expect](#what-to-expect)
   * [Files and directories in the repository](#files-and-directories-in-the-repository)
-  * [Tutorial](#tutorial)
+  * [Credits](#credits)
 
-## Training 
+## Requirements
 
-`main.py --help`
+* The required packages are located in the `requirements.txt` file, nothing special.
+  * `pip install -r requirements.txt`
+* We provide an `environment.yml` file for `conda` (at the repo's root), which installs all that is needed to run the files.
+  * `conda env create -f environment.yml`
 
+## Training
 
-You should use the `main.py` file with the following arguments:
+To run training: 
 
-|Argument                 | Description                                 |Legal Values |
-|-------------------------|---------------------------------------------|-------------|
-|-h, --help       | shows arguments description             			| 			|
-|-d, --dataset     | dataset to train on 				               	|str: 'cifar10', 'mnist', 'fmnist', 'svhn', 'monsters128', 'celeb128', 'celeb256', 'celeb1024'	|
-|-n, --num_epochs	| total number of epochs to run			| int: default=250|
-|-z, --z_dim| latent dimensions										| int: default=128|
-|-s, --seed| random state to use. for random: -1 						| int: -1 , 0, 1, 2 ,....|
-|-v, --num_vae| number of iterations for vanilla vae training 				| int: default=0|
-|-l, --lr| learning rate 												| float: defalut=2e-4 |
-|-r, --beta_rec | beta coefficient for the reconstruction loss |float: default=1.0|
-|-k, --beta_kl| beta coefficient for the kl divergence							| float: default=1.0|
-|-e, --beta_neg| beta coefficient for the kl divergence in the expELBO function | float: default=256.0|
-|-g, --gamma_r| coefficient for the reconstruction loss for fake data in the decoder		| float: default=1e-8|
-|-b, --batch_size| batch size 											| int: default=32 |
-|-p, --pretrained     | path to pretrained model, to continue training	 	|str: default="None"	|
-|-c, --device| device: -1 for cpu, 0 and up for specific cuda device						|int: default=-1|
-|-f, --fid| if specified, FID wil be calculated during training				|bool: default=False|
+* Modify the hyperparameters in `/config/soft_intro_vae_hp.json`
 
-Examples:
+* Run: `python train_soft_intro_vae_3d.py`
 
-`python main.py --dataset cifar10 --device 0 --lr 2e-4 --num_epochs 250 --beta_kl 1.0 --beta_rec 1.0 --beta_neg 256 --z_dim 128 --batch_size 32`
+## Testing
 
-`python main.py --dataset mnist --device 0 --lr 2e-4 --num_epochs 200 --beta_kl 1.0 --beta_rec 1.0 --beta_neg 256 --z_dim 32 --batch_size 128`
+* To test the generations from a trained model in terms of JSD, modify `path_to_weights` and `config_path` in `test_model.py` and run it: `python test_model.py`.
+* To produce reconstructed and generated point clouds in a form of NumPy array to be used with validation methods from ["Learning Representations and Generative Models For 3D Point Clouds" repository](https://github.com/optas/latent_3d_points/blob/master/notebooks/compute_evaluation_metrics.ipynb)
+modify `path_to_weights` and `config_path` in `evaluation/generate_data_for_metrics.py` and run: `python evaluation/generate_data_for_metrics.py` 
+
+## Rendering
+* To render beautiful point clouds from a trained model, we provide a script that uses Mitsuba 2 renderer. Instructions can be found in `/render`.
 
 ## Datasets
-* CelebHQ: please follow [ALAE](https://github.com/podgorskiy/ALAE#datasets) instructions.
-* Digital-Monsters dataset: we curated a “Digital Monsters” dataset: ~4000 images of Pokemon, Digimon and Nexomon (yes, it’s a thing). We currently don't provide a download link for this dataset (not because we are bad people), but please contact us if you wish to create it yourself.
+* We currently support [ShapeNet](https://shapenet.org/), which will be downloaded automatically on first run.
 
-On the left is a sample from the (very diverse) Digital-Monsters dataset (we used augmentations to enrich it), and on the right, samples generated from S-IntroVAE.
-We hope this does not give you nightmares.
+## Pretrained models
+|Dataset/Class | Filename | Validation Sample JSD| Links|
+|------------|------|----|---|
+|ShapeNet-Chair|`chair_01618_jsd_0.0175.pth` |0.0175|[MEGA.co.nz](https://mega.nz/file/RJ8mmIjL#DKuvWImRZdzKL_JN9JwwsvZw3F4Iv0i5g0qaLiSL84Q), [Mediafire](http://www.mediafire.com/file/i9ozb2yv4bv1i76/chair_01618_jsd_0.0175.pth/file) |
+|ShapeNet-Table|`table_01592_jsd_0.0143.pth` |0.0143 | [MEGA.co.nz](https://mega.nz/file/ZQ8GjSQB#ctGaJXgvUsgaMYQm1R3bfMUzKld7nGO-oUAGGA9EOX8), [Mediafire](http://www.mediafire.com/file/hvygeusesaa58y2/table_01592_jsd_0.0143.pth/file) |
+|ShapeNet-Car|`car_01344_jsd_0.0113.pth` |0.0113 | [MEGA.co.nz](https://mega.nz/file/kZ0AQQQL#hecHNlPyh0ww3_RZOvrXCE48yr5ZmfL3RZ01MSz2NwU), [Mediafire](http://www.mediafire.com/file/ja1p9wjnc58uab4/car_01344_jsd_0.0113.pth/file) |
+|ShapeNet-Airplane|`airplane_00536_jsd_0.0191.pth` |0.0191 | [MEGA.co.nz](https://mega.nz/file/xA9g0ajA#jyhBgPQC4VxLwgDPfk-xo_xAbCUQofzVz9jdP0OUvDc), [Mediafire](http://www.mediafire.com/file/79ett5dhhwm2yl8/airplane_00536_jsd_0.0191.pth/file) |
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/taldatech/soft-intro-vae-web/main/assets/monsters_data.png" width="320">
-  <img src="https://raw.githubusercontent.com/taldatech/soft-intro-vae-web/main/assets/monsters_generated_c.png" width="320">
-</p>
 
 ## Recommended hyperparameters
 
-|Dataset | `beta_kl` | `beta_rec`| `beta_neg`|`z_dim`|`batch_size`|
-|------------|------|----|---|----|---|
-|CIFAR10 (`cifar10`)|1.0|1.0| 256|128| 32|
-|SVHN (`svhn`)|1.0|1.0| 256|128| 32|
-|MNIST (`mnist`)|1.0|1.0|256|32|128|
-|FashionMNIST (`fmnist`)|1.0|1.0|256|32|128|
-|Monsters (`monsters128`)|0.2|0.2|256|128|16|
-|CelebA-HQ (`celeb256`)|0.5|1.0|1024|256|8|
+|Dataset | `beta_kl` | `beta_rec`| `beta_neg`|`z_dim`|
+|------------|------|----|---|----|
+|ShapeNet|0.2|1.0| 20.0|128|
 
 
 ## What to expect
 
 * During the training, figures of samples and reconstructions are saved locally.
+  * First row - real, second row - reconstructions, third row - random samples
 * During training, statistics are printed (reconstruction error, KLD, expELBO).
-* At the end of each epoch, a summary of statistics will be printed.
+* Checkpoint is saved every epoch, and JSD is calculated on the validation split.
 * Tips:
-    * KL of fake/rec samples should be >= KL of real data.
-    * It is usually better to choose `beta_kl` >= `beta_rec`.
-    * FID calculation is not so fast, so turn it off if you don't care about it. 
+    * KL of fake/rec samples should be > KL of real data (by a fair margin).
+    * Currently, this code only supports the Chamfer Distance loss, which requires high `beta_rec`.
+    * Since the practice is to train on a single class, it is usually better to use a narrower Gaussian for the prior (e.g., N(0, 0.2)).
+  
 
 ## Files and directories in the repository
 
 |File name         | Purpose |
 |----------------------|------|
-|`main.py`| general purpose main application for training Soft-IntroVAE for image data|
-|`train_soft_intro_vae.py`| main training function, datasets and architectures|
-|`datasets.py`| classes for creating PyTorch dataset classes from images|
-|`metrics/fid.py`, `metrics/inception.py`| functions for FID calculation from datasets, using the pretrained Inception network|
+|`train_soft_intro_vae_3d.py`| main training function.|
+|`generate_for_rendering.py`| generate samples (+interpolation) from a trained model for rendering with Mitsuba.|
+|`test_model.py`| test sampling JSD of a trained model (w.r.t the test split).|
+|`config/soft_intro_vae_hp.json`| contains the hyperparmeters of the model.|
+|`/datasets`| directory containing various datasets files (e.g., data loader for ShapeNet).|
+|`/evaluations`| directory containing evaluation scrips (e.g., generating data for evaluation metrics).|
+|`/losses/chamfer_loss.py`| PyTorch implementation of the Chamfer distance loss function.|
+|`/metrics/jsd.py`| functions to measure JSD between point clouds.|
+|`/models/vae.py`| VAE module and architecture.|
+|`/render`| directory containing scripts and instructions to render point clouds with Mitsuba 2 renderer.|
+|`/utils`| various utility functions to process the data|
 
-
-## Tutorial
-* [Jupyter Notebook tutorial for image datasets](https://github.com/taldatech/soft-intro-vae-pytorch/blob/main/soft_intro_vae_tutorial/soft_intro_vae_image_code_tutorial.ipynb)
-  * [Open in Colab](https://colab.research.google.com/github/taldatech/soft-intro-vae-pytorch/blob/main/soft_intro_vae_tutorial/soft_intro_vae_image_code_tutorial.ipynb)
-
+## Credits
+* Adversarial Autoencoders for Compact Representations of 3D Point Clouds, Zamorski et al., 2018 - [Code](https://github.com/MaciejZamorski/3d-AAE), [Paper](https://arxiv.org/abs/1811.07605).
 
